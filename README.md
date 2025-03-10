@@ -2,7 +2,7 @@
 
 AI-powered tool for extracting structured shipping data from various document formats (PDF, Excel, CSV). Features multi-page processing, intelligent field extraction, interactive data table, column management, export options, and an AI chat assistant for data analysis.
 
-![Shipping Data Extractor Demo](https://shipping-data-extractor-app.up.railway.app)
+## Live: https://shipping-data-extractor-app.up.railway.app/
 
 ## Features
 
