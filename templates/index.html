@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Data Extractor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1 class="app-title">Shipping Data Extractor</h1>
+        </header>
+        
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="progress-step active" id="step-1">
+                    <div class="step-icon">1</div>
+                    <div class="step-label">Upload Documents</div>
+                </div>
+                <div class="progress-step" id="step-2">
+                    <div class="step-icon">2</div>
+                    <div class="step-label">Processing</div>
+                </div>
+                <div class="progress-step" id="step-3">
+                    <div class="step-icon">3</div>
+                    <div class="step-label">Results</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stage 1: Upload -->
+        <div id="upload-stage" class="stage active">
+            <div class="card animate-fade-in">
+                <div class="card-header">
+                    <i class="fas fa-upload me-2"></i> Upload Shipping Documents
+                </div>
+                <div class="card-body">
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="drop-text">
+                            <h4>Drag & Drop Files Here</h4>
+                            <p>Upload PDFs, Excel, CSV, or Image files</p>
+                            <input type="file" id="file-input" multiple accept=".pdf,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.tiff" class="d-none">
+                            <button type="button" class="btn btn-primary px-4" id="browse-button">
+                                <i class="fas fa-folder-open me-2"></i> Browse Files
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="file-list" id="file-list"></div>
+                    
+                    <div class="d-flex justify-content-center">
+                        <button type="button" class="btn btn-primary px-4" id="extract-button" disabled>
+                            <i class="fas fa-magic me-2"></i> Extract Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stage 2: Processing -->
+        <div id="processing-stage" class="stage">
+            <div class="card animate-fade-in">
+                <div class="card-header">
+                    <i class="fas fa-cogs me-2"></i> Processing Documents
+                </div>
+                <div class="card-body">
+                    <div class="spinner-container d-flex flex-column align-items-center py-5">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="spinner-text mt-4">
+                            <h5 class="mb-2">Extracting data from your documents</h5>
+                            <p class="text-muted mb-0">This may take a few moments depending on file size and complexity.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stage 3: Results -->
+        <div id="results-stage" class="stage">
+            <div class="card animate-fade-in">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-table me-2"></i> Extraction Results
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light" id="back-to-upload">
+                        <i class="fas fa-upload me-2"></i> Upload More
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, var(--primary-light), var(--primary));">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="stat-title">Documents Processed</div>
+                            <div class="stat-value" id="docs-count">0</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #4cc9f0, #4895ef);">
+                                <i class="fas fa-shipping-fast"></i>
+                            </div>
+                            <div class="stat-title">Shipments Found</div>
+                            <div class="stat-value" id="shipments-count">0</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #7209b7, #560bad);">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div class="stat-title">Containers</div>
+                            <div class="stat-value" id="containers-count">0</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #f72585, #ef476f);">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-title">Processing Time</div>
+                            <div class="stat-value" id="processing-time">0s</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row align-items-center mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control search-input border-start-0" id="table-search" placeholder="Search in all fields...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-md-end gap-2 flex-wrap">
+                                <div class="column-toggle">
+                                    <button type="button" class="column-toggle-btn" id="toggle-columns">
+                                        <i class="fas fa-columns"></i> Columns
+                                    </button>
+                                    <div class="column-toggle-menu" id="column-menu">
+                                        <input type="text" class="column-toggle-search" placeholder="Search columns...">
+                                        <div class="column-list" id="column-list">
+                                            <!-- Column checkboxes will be added here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-download me-2"></i> Export
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                        <li><a class="dropdown-item" href="#" id="export-excel"><i class="fas fa-file-excel me-2"></i> Excel</a></li>
+                                        <li><a class="dropdown-item" href="#" id="export-csv"><i class="fas fa-file-csv me-2"></i> CSV</a></li>
+                                        <li><a class="dropdown-item" href="#" id="export-json"><i class="fas fa-file-code me-2"></i> JSON</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <div>
+                                <i class="fas fa-shipping-fast me-2"></i> Extracted Shipping Data
+                                <span class="badge bg-light text-primary ms-2" id="record-count">0 records</span>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="results-table" id="results-table">
+                                <thead>
+                                    <tr id="table-headers">
+                                        <!-- Table headers will be dynamically added here -->
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <!-- Table data will be dynamically added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>© 2025 Shipping Data Extractor | Powered by AI Technology</p>
+        </footer>
+    </div>
+    
+    <!-- Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-toggle" id="chat-toggle">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="chat-panel" id="chat-panel">
+            <div class="chat-header">
+                <div>AI Assistant</div>
+                <div class="chat-close" id="chat-close">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-message assistant-message">
+                    <p>Hello! I'm your shipping data assistant. Ask me anything about your extracted data or how to use the application.</p>
+                </div>
+            </div>
+            <div class="chat-form">
+                <input type="text" class="chat-input" id="chat-input" placeholder="Type your question...">
+                <button type="button" class="btn-send" id="send-message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
