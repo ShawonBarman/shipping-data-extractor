@@ -39,7 +39,7 @@ body {
 
 .app-title {
     font-weight: 700;
-    font-size: 2.2rem;
+    font-size: 2.5rem;
     background: linear-gradient(to right, var(--primary), var(--secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -78,18 +78,18 @@ body {
 }
 
 .card-body {
-    padding: 15px;
+    padding: 20px;
 }
 
 /* Drop Zone Styles */
 .drop-zone {
     border: 2px dashed #d1d7dc;
     border-radius: 12px;
-    padding: 20px;
+    padding: 40px 20px;
     text-align: center;
     transition: var(--transition);
     background-color: #f8fafc;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     cursor: pointer;
 }
 
@@ -264,7 +264,7 @@ body {
     position: sticky;
     top: 0;
     background: #f1f5f9;
-    padding: 10px 15px;
+    padding: 12px 15px;
     font-weight: 600;
     color: var(--text-dark);
     text-align: left;
@@ -273,7 +273,7 @@ body {
 }
 
 .results-table tbody td {
-    padding: 10px 15px;
+    padding: 12px 15px;
     border-bottom: 1px solid #eef2fd;
     color: var(--text-dark);
 }
@@ -298,7 +298,7 @@ body {
     background: white;
     border-radius: 16px;
     box-shadow: var(--shadow);
-    padding: 10px;
+    padding: 20px;
     flex: 1;
     min-width: 200px;
     text-align: center;
@@ -311,14 +311,14 @@ body {
 }
 
 .stat-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 12px;
-    margin: 0 auto 10px;
+    margin: 0 auto 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     color: white;
 }
 
@@ -329,14 +329,14 @@ body {
 }
 
 .stat-value {
-    font-size: 1rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--text-dark);
 }
 
 /* Progress Steps */
 .progress-container {
-    margin: 30px auto;
+    margin: 40px auto;
     max-width: 800px;
 }
 
@@ -640,10 +640,135 @@ body {
     color: #0369a1;
 }
 
+/* Table Column Drag-and-Drop */
+.dragging {
+    opacity: 0.5;
+    background-color: #e8f0fe !important;
+}
+
+.drag-over {
+    background-color: #e8f0fe !important;
+}
+
+/* JSON Viewer Styles */
+.json-viewer-container {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
+}
+
+.json-viewer-toolbar {
+    background-color: #2d2d2d;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #3d3d3d;
+}
+
+.json-viewer-pre {
+    margin: 0;
+    padding: 15px;
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: 'Fira Code', 'Roboto Mono', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #d4d4d4;
+}
+
+/* JSON Syntax Highlighting */
+.json-key {
+    color: #9cdcfe;
+}
+
+.json-string {
+    color: #ce9178;
+}
+
+.json-number {
+    color: #b5cea8;
+}
+
+.json-boolean {
+    color: #569cd6;
+}
+
+.json-null {
+    color: #569cd6;
+}
+
+/* Data View Tabs */
+.data-view-tabs {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.data-view-tab {
+    padding: 10px 20px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50px;
+    margin-right: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.data-view-tab.active {
+    background: linear-gradient(to right, var(--primary), var(--primary-light));
+    color: white;
+    box-shadow: 0 4px 15px rgba(67, 97, 238, 0.2);
+}
+
+/* View Container */
+.data-view {
+    display: none;
+}
+
+.data-view.active {
+    display: block;
+}
+
+/* Light theme for JSON viewer */
+.json-viewer-container.light-theme {
+    background-color: #f8f9fa;
+}
+
+.json-viewer-container.light-theme .json-viewer-toolbar {
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.json-viewer-container.light-theme .json-viewer-pre {
+    color: #212529;
+}
+
+.json-viewer-container.light-theme .json-key {
+    color: #0070c1;
+}
+
+.json-viewer-container.light-theme .json-string {
+    color: #a31515;
+}
+
+.json-viewer-container.light-theme .json-number {
+    color: #098658;
+}
+
+.json-viewer-container.light-theme .json-boolean {
+    color: #0000ff;
+}
+
+.json-viewer-container.light-theme .json-null {
+    color: #0000ff;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .app-title {
-        font-size: 1.8rem;
+        font-size: 2rem;
     }
     
     .app-subtitle {
@@ -685,6 +810,26 @@ body {
     .progress-step .step-label {
         font-size: 0.8rem;
     }
+    
+    .stats-row {
+        gap: 10px;
+    }
+    
+    .stat-card {
+        min-width: 140px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .data-view-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .data-view-tab {
+        margin-bottom: 10px;
+    }
 }
 
 @media (max-width: 576px) {
@@ -719,5 +864,9 @@ body {
         width: 280px;
         height: 400px;
         bottom: 60px;
+    }
+    
+    .json-viewer-pre {
+        font-size: 0.8rem;
     }
 }

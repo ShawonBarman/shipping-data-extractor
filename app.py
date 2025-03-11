@@ -2,13 +2,13 @@ import os
 import json
 import uuid
 import datetime
+import io
 from flask import Flask, request, render_template, jsonify, send_file, session
 from werkzeug.utils import secure_filename
 import PyPDF2
 from openai import OpenAI
 from dotenv import load_dotenv
 import pandas as pd
-import io
 
 # Load environment variables
 load_dotenv()
@@ -20,16 +20,13 @@ app.secret_key = os.getenv("SECRET_KEY", os.urandom(24))  # For session manageme
 # Configure OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Configure upload folder
-UPLOAD_FOLDER = 'uploads'
+# Define allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'gif', 'tiff', 'jpeg', 'jpg', 'png', 'bmp', 'webp', 
                       'xls', 'xlsx', 'xlsm', 'xlsb', 'csv', 'xlt', 'xltx', 'xltm', 'xlam'}
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Define the table fields we want to extract
 TABLE_FIELDS = [
-    "office", "batch_no", "customer", "type", "reference_number", "booking_number", 
+    "office_name", "batch_no", "customer", "type", "reference_number", "booking_number", 
     "bol_number", "po_number", "container_number", "container_size", "container_type", 
     "pickup_location_name", "delivery_location_name", "delivery_street_address", 
     "delivery_city", "delivery_state", "delivery_zip", "return_location", 
@@ -43,48 +40,51 @@ def allowed_file(filename):
     """Check if uploaded file has allowed extension"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def extract_text_from_pdf(pdf_path):
-    """Extract text from a PDF file with improved debugging"""
+def extract_text_from_pdf_bytes(pdf_bytes):
+    """Extract text from PDF bytes without saving to disk"""
     text = ""
     page_texts = []  # Store each page separately for debugging
     try:
-        with open(pdf_path, 'rb') as file:
-            reader = PyPDF2.PdfReader(file)
-            total_pages = len(reader.pages)
-            print(f"PDF has {total_pages} pages")
-            
-            for page_num in range(total_pages):
-                page_text = reader.pages[page_num].extract_text()
-                page_texts.append(page_text)
-                text += page_text + "\n\n=== PAGE BREAK ===\n\n"  # Clear page separator for model
-                print(f"Extracted page {page_num+1}/{total_pages}, length: {len(page_text)} chars")
-            
-            # Debugging information
-            print(f"Total extracted text length: {len(text)} chars")
-            print(f"Individual page lengths: {[len(pt) for pt in page_texts]}")
+        # Create a BytesIO object from the bytes
+        pdf_io = io.BytesIO(pdf_bytes)
+        
+        # Create a PDF reader object
+        reader = PyPDF2.PdfReader(pdf_io)
+        total_pages = len(reader.pages)
+        print(f"PDF has {total_pages} pages")
+        
+        for page_num in range(total_pages):
+            page_text = reader.pages[page_num].extract_text()
+            page_texts.append(page_text)
+            text += page_text + "\n\n=== PAGE BREAK ===\n\n"  # Clear page separator for model
+            print(f"Extracted page {page_num+1}/{total_pages}, length: {len(page_text)} chars")
+        
+        # Debugging information
+        print(f"Total extracted text length: {len(text)} chars")
+        print(f"Individual page lengths: {[len(pt) for pt in page_texts]}")
         return text
     except Exception as e:
         print(f"Error extracting text from PDF: {e}")
         return None
 
-def process_excel_file(file_path):
-    """Extract data from Excel file"""
+def process_excel_bytes(excel_bytes, file_extension):
+    """Extract data from Excel file bytes without saving to disk"""
     try:
-        df = pd.read_excel(file_path)
+        # Create BytesIO object from bytes
+        excel_io = io.BytesIO(excel_bytes)
+        
+        # Read into pandas based on file type
+        if file_extension in ['xlsx', 'xlsm', 'xlsb', 'xlt', 'xltx', 'xltm', 'xlam']:
+            df = pd.read_excel(excel_io)
+        elif file_extension == 'csv':
+            df = pd.read_csv(excel_io)
+        else:
+            return None
+            
         # Basic processing - in a real app, you'd have more complex logic here
         return df.to_dict('records')
     except Exception as e:
-        print(f"Error processing Excel file: {e}")
-        return None
-
-def process_csv_file(file_path):
-    """Extract data from CSV file"""
-    try:
-        df = pd.read_csv(file_path)
-        # Basic processing - in a real app, you'd have more complex logic here
-        return df.to_dict('records')
-    except Exception as e:
-        print(f"Error processing CSV file: {e}")
+        print(f"Error processing Excel/CSV data: {e}")
         return None
 
 def process_pdf_with_openai(pdf_text):
@@ -197,7 +197,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """Process uploaded files and extract data"""
+    """Process uploaded files and extract data directly from memory without saving files"""
     if 'files[]' not in request.files:
         return jsonify({'success': False, 'message': 'No file part'})
     
@@ -210,20 +210,22 @@ def upload_file():
     ez_id = request.form.get('ez_id', '')
     
     all_results = []
+    file_count = 0
     
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            
-            # Process based on file type
             file_extension = filename.rsplit('.', 1)[1].lower()
             
+            # Read file into memory instead of saving to disk
+            file_bytes = file.read()
+            file_count += 1
+            
+            # Process based on file type
             if file_extension == 'pdf':
-                # Extract text from PDF
+                # Extract text from PDF bytes
                 print(f"Processing PDF file: {filename}")
-                pdf_text = extract_text_from_pdf(filepath)
+                pdf_text = extract_text_from_pdf_bytes(file_bytes)
                 if not pdf_text:
                     return jsonify({'success': False, 'message': f'Failed to extract text from {filename}'})
                 
@@ -232,17 +234,11 @@ def upload_file():
                 if not result:
                     return jsonify({'success': False, 'message': f'Failed to process {filename} with OpenAI'})
                 
-            elif file_extension in ['xls', 'xlsx', 'xlsm', 'xlsb']:
-                # Process Excel file
-                result = process_excel_file(filepath)
+            elif file_extension in ['xls', 'xlsx', 'xlsm', 'xlsb', 'csv']:
+                # Process Excel/CSV bytes
+                result = process_excel_bytes(file_bytes, file_extension)
                 if not result:
-                    return jsonify({'success': False, 'message': f'Failed to process Excel file {filename}'})
-                
-            elif file_extension == 'csv':
-                # Process CSV file
-                result = process_csv_file(filepath)
-                if not result:
-                    return jsonify({'success': False, 'message': f'Failed to process CSV file {filename}'})
+                    return jsonify({'success': False, 'message': f'Failed to process {file_extension.upper()} file {filename}'})
             
             else:
                 # For image files (in a real app, you'd use OCR here)
@@ -264,7 +260,7 @@ def upload_file():
                     item['processed_at'] = datetime.datetime.now().isoformat()
                     item['record_id'] = str(uuid.uuid4())
                 all_results.extend(data_items)
-            else:
+            elif result:  # Make sure result is not None
                 # If result is directly the object
                 result['source_file'] = filename
                 result['processed_at'] = datetime.datetime.now().isoformat()
@@ -334,7 +330,7 @@ def export_data():
             )
             
         elif format_type == 'csv':
-            # Create CSV in memory
+            # Create CSV in memory and return data for client-side download
             output = io.StringIO()
             df = pd.DataFrame(data)
             df.to_csv(output, index=False)

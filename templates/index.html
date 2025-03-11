@@ -9,12 +9,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <div class="app-container">
         <header class="app-header">
             <h1 class="app-title">Shipping Data Extractor</h1>
+            <p class="app-subtitle">Upload shipping documents to instantly extract structured data with AI-powered accuracy</p>
         </header>
         
         <div class="progress-container">
@@ -57,7 +59,7 @@
                     
                     <div class="file-list" id="file-list"></div>
                     
-                    <div class="d-flex justify-content-center">
+                    <div class="d-flex justify-content-end">
                         <button type="button" class="btn btn-primary px-4" id="extract-button" disabled>
                             <i class="fas fa-magic me-2"></i> Extract Data
                         </button>
@@ -132,61 +134,88 @@
                         </div>
                     </div>
                     
-                    <div class="row align-items-center mb-4">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="text" class="form-control search-input border-start-0" id="table-search" placeholder="Search in all fields...">
+                    <!-- Data View Tabs -->
+                    <div class="data-view-tabs mb-4">
+                        <button type="button" class="data-view-tab active" data-view="table-view">
+                            <i class="fas fa-table me-2"></i> Table View
+                        </button>
+                        <button type="button" class="data-view-tab" data-view="json-view">
+                            <i class="fas fa-code me-2"></i> JSON View
+                        </button>
+                    </div>
+                    
+                    <!-- Table View Container -->
+                    <div id="table-view" class="data-view active">
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control search-input border-start-0" id="table-search" placeholder="Search in all fields...">
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-md-end gap-2 flex-wrap">
-                                <div class="column-toggle">
-                                    <button type="button" class="column-toggle-btn" id="toggle-columns">
-                                        <i class="fas fa-columns"></i> Columns
-                                    </button>
-                                    <div class="column-toggle-menu" id="column-menu">
-                                        <input type="text" class="column-toggle-search" placeholder="Search columns...">
-                                        <div class="column-list" id="column-list">
-                                            <!-- Column checkboxes will be added here -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-md-end gap-2 flex-wrap">
+                                    <div class="column-toggle">
+                                        <button type="button" class="column-toggle-btn" id="toggle-columns">
+                                            <i class="fas fa-columns"></i> Columns
+                                        </button>
+                                        <div class="column-toggle-menu" id="column-menu">
+                                            <input type="text" class="column-toggle-search" placeholder="Search columns...">
+                                            <div class="column-list" id="column-list">
+                                                <!-- Column checkboxes will be added here -->
+                                            </div>
                                         </div>
                                     </div>
+                                    
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-download me-2"></i> Export
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                            <li><a class="dropdown-item" href="#" id="export-excel"><i class="fas fa-file-excel me-2"></i> Excel</a></li>
+                                            <li><a class="dropdown-item" href="#" id="export-csv"><i class="fas fa-file-csv me-2"></i> CSV</a></li>
+                                            <li><a class="dropdown-item" href="#" id="export-json"><i class="fas fa-file-code me-2"></i> JSON</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
-                                
-                                <div class="dropdown">
-                                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-download me-2"></i> Export
-                                    </button>
-                                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
-                                        <li><a class="dropdown-item" href="#" id="export-excel"><i class="fas fa-file-excel me-2"></i> Excel</a></li>
-                                        <li><a class="dropdown-item" href="#" id="export-csv"><i class="fas fa-file-csv me-2"></i> CSV</a></li>
-                                        <li><a class="dropdown-item" href="#" id="export-json"><i class="fas fa-file-code me-2"></i> JSON</a></li>
-                                    </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container">
+                            <div class="table-header">
+                                <div>
+                                    <i class="fas fa-shipping-fast me-2"></i> Extracted Shipping Data
+                                    <span class="badge bg-light text-primary ms-2" id="record-count">0 records</span>
                                 </div>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="results-table" id="results-table">
+                                    <thead>
+                                        <tr id="table-headers">
+                                            <!-- Table headers will be dynamically added here -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-body">
+                                        <!-- Table data will be dynamically added here -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="table-container">
-                        <div class="table-header">
-                            <div>
-                                <i class="fas fa-shipping-fast me-2"></i> Extracted Shipping Data
-                                <span class="badge bg-light text-primary ms-2" id="record-count">0 records</span>
+                    <!-- JSON View Container -->
+                    <div id="json-view" class="data-view">
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="theme-toggle">
+                                <label class="form-check-label" for="theme-toggle">Toggle light/dark theme</label>
                             </div>
                         </div>
-                        <div class="table-wrapper">
-                            <table class="results-table" id="results-table">
-                                <thead>
-                                    <tr id="table-headers">
-                                        <!-- Table headers will be dynamically added here -->
-                                    </tr>
-                                </thead>
-                                <tbody id="table-body">
-                                    <!-- Table data will be dynamically added here -->
-                                </tbody>
-                            </table>
+                        
+                        <div id="json-viewer">
+                            <!-- JSON viewer will be inserted here -->
                         </div>
                     </div>
                 </div>

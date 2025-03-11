@@ -34,6 +34,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportExcel = document.getElementById('export-excel');
     const exportCsv = document.getElementById('export-csv');
     const exportJson = document.getElementById('export-json');
+    const themeToggle = document.getElementById('theme-toggle');
+    
+    // Add data view tab functionality
+    const dataViewTabs = document.querySelectorAll('.data-view-tab');
+    const dataViews = document.querySelectorAll('.data-view');
+    
+    dataViewTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const viewName = this.dataset.view;
+            
+            // Update active tab
+            dataViewTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update active view
+            dataViews.forEach(view => {
+                view.classList.remove('active');
+                if (view.id === viewName) {
+                    view.classList.add('active');
+                }
+            });
+        });
+    });
     
     // Global variables
     let files = [];
@@ -211,6 +234,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Build table
                 buildResultsTable(extractedData);
                 
+                // Build JSON viewer
+                buildJSONViewer(extractedData);
+                
                 // Show results stage
                 showStage('results');
                 
@@ -325,18 +351,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (['pickup_appointment_date_time', 'delivery_appointment_date_time'].includes(column) && value) {
                     value = formatDate(value);
                 }
-
-                // Special handling for the I/E (type) column - always show a dash
-                if (column === 'type') {
-                    td.textContent = '-';
-                } else {
-                    // Normal handling for other columns
-                    td.textContent = value || '';
-                    if (!value) {
-                        td.innerHTML = '<span class="text-muted">-</span>';
-                    }
-                }
                 
+                td.textContent = value || '';
                 if (!value) {
                     td.innerHTML = '<span class="text-muted">-</span>';
                 }
@@ -856,5 +872,168 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.removeChild(notification);
             }, 300);
         }, 3000);
+    }
+    
+    // JSON Viewer functionality
+    
+    // Add theme toggle functionality for JSON viewer
+    themeToggle.addEventListener('change', function() {
+        const jsonViewerContainer = document.querySelector('.json-viewer-container');
+        if (jsonViewerContainer) {
+            jsonViewerContainer.classList.toggle('light-theme');
+        }
+    });
+    
+    // Build the JSON viewer
+    function buildJSONViewer(data) {
+        const jsonViewerContainer = document.getElementById('json-viewer');
+        jsonViewerContainer.innerHTML = '';
+        
+        // If there's no data, show a message
+        if (!data || data.length === 0) {
+            jsonViewerContainer.innerHTML = '<div class="alert alert-info">No data available.</div>';
+            return;
+        }
+        
+        // Create the JSON viewer
+        const jsonViewer = createJSONViewer(data);
+        jsonViewerContainer.appendChild(jsonViewer);
+        
+        // Check theme toggle state
+        if (themeToggle.checked) {
+            jsonViewer.classList.add('light-theme');
+        }
+    }
+    
+    // Function to create a syntax-highlighted JSON viewer
+    function createJSONViewer(jsonData) {
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'json-viewer-container';
+        
+        // Create toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'json-viewer-toolbar';
+        
+        // Add toolbar buttons
+        const viewToggle = document.createElement('button');
+        viewToggle.className = 'btn btn-sm btn-light me-2';
+        viewToggle.innerHTML = '<i class="fas fa-code me-1"></i> Raw JSON';
+        viewToggle.title = 'Toggle between formatted and raw JSON';
+        
+        const copyButton = document.createElement('button');
+        copyButton.className = 'btn btn-sm btn-light me-2';
+        copyButton.innerHTML = '<i class="fas fa-copy me-1"></i> Copy';
+        copyButton.title = 'Copy JSON to clipboard';
+        
+        const downloadButton = document.createElement('button');
+        downloadButton.className = 'btn btn-sm btn-light';
+        downloadButton.innerHTML = '<i class="fas fa-download me-1"></i> Download';
+        downloadButton.title = 'Download JSON file';
+        
+        toolbar.appendChild(viewToggle);
+        toolbar.appendChild(copyButton);
+        toolbar.appendChild(downloadButton);
+        
+        // Create pre and code elements
+        const pre = document.createElement('pre');
+        pre.className = 'json-viewer-pre';
+        
+        const code = document.createElement('code');
+        code.className = 'json-code language-json';
+        
+        // Format JSON with syntax highlighting
+        const formattedJSON = formatJSON(jsonData);
+        code.innerHTML = formattedJSON;
+        
+        // Assemble the components
+        pre.appendChild(code);
+        container.appendChild(toolbar);
+        container.appendChild(pre);
+        
+        // Add event listeners for toolbar buttons
+        let isRawView = false;
+        
+        viewToggle.addEventListener('click', () => {
+            isRawView = !isRawView;
+            if (isRawView) {
+                // Show raw JSON (no indentation)
+                code.textContent = JSON.stringify(jsonData);
+                viewToggle.innerHTML = '<i class="fas fa-indent me-1"></i> Formatted';
+            } else {
+                // Show formatted JSON
+                code.innerHTML = formattedJSON;
+                viewToggle.innerHTML = '<i class="fas fa-code me-1"></i> Raw JSON';
+            }
+        });
+        
+        copyButton.addEventListener('click', () => {
+            const textToCopy = isRawView 
+                ? JSON.stringify(jsonData)
+                : JSON.stringify(jsonData, null, 2);
+                
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    showCopySuccessIndicator(copyButton);
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    alert('Failed to copy to clipboard');
+                });
+        });
+        
+        downloadButton.addEventListener('click', () => {
+            const jsonString = JSON.stringify(jsonData, null, 2);
+            downloadFile(jsonString, `shipping_data_${Date.now()}.json`, 'application/json');
+        });
+        
+        return container;
+    }
+    
+    // Format JSON with syntax highlighting
+    function formatJSON(jsonData) {
+        const jsonString = JSON.stringify(jsonData, null, 2);
+        
+        // Simple syntax highlighting
+        return jsonString
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                        // Remove the colon from the matched string for styling
+                        match = match.replace(/:$/, '') + ':';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                // Return the match wrapped in a span with the appropriate class
+                if (cls === 'json-key') {
+                    return `<span class="${cls}">${match.replace(/:$/, '')}</span>:`;
+                }
+                return `<span class="${cls}">${match}</span>`;
+            })
+            .replace(/:\s+/g, ': ')  // Keep the colon and space together for styling
+            .replace(/\n/g, '<br>')
+            .replace(/\s{2}/g, '&nbsp;&nbsp;');  // Preserve indentation
+    }
+    
+    // Show copy success indicator
+    function showCopySuccessIndicator(button) {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+        button.disabled = true;
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.disabled = false;
+        }, 2000);
     }
 });
