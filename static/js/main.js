@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const step1 = document.getElementById('step-1');
     const step2 = document.getElementById('step-2');
     const step3 = document.getElementById('step-3');
-    const tableSearch = document.getElementById('table-search');
     const tableHeaders = document.getElementById('table-headers');
     const tableBody = document.getElementById('table-body');
     const recordCount = document.getElementById('record-count');
@@ -22,9 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const shipmentsCount = document.getElementById('shipments-count');
     const containersCount = document.getElementById('containers-count');
     const processingTime = document.getElementById('processing-time');
-    const toggleColumnsBtn = document.getElementById('toggle-columns');
-    const columnMenu = document.getElementById('column-menu');
-    const columnList = document.getElementById('column-list');
     const chatToggle = document.getElementById('chat-toggle');
     const chatPanel = document.getElementById('chat-panel');
     const chatClose = document.getElementById('chat-close');
@@ -453,8 +449,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Build column toggle checkboxes
     function buildColumnToggles(columns) {
-        columnList.innerHTML = '';
-        
         columns.forEach(column => {
             const item = document.createElement('div');
             item.className = 'column-item';
@@ -476,22 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             item.appendChild(checkbox);
             item.appendChild(label);
-            columnList.appendChild(item);
-        });
-        
-        // Add column search functionality
-        document.querySelector('.column-toggle-search').addEventListener('input', function() {
-            const searchText = this.value.toLowerCase();
-            
-            document.querySelectorAll('.column-item').forEach(item => {
-                const label = item.querySelector('label').textContent.toLowerCase();
-                
-                if (label.includes(searchText)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
         });
     }
     
@@ -561,45 +539,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .join(' ');
     }
     
-    // Toggle columns menu
-    toggleColumnsBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        columnMenu.classList.toggle('show');
-    });
-    
-    // Close columns menu when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!toggleColumnsBtn.contains(e.target) && !columnMenu.contains(e.target)) {
-            columnMenu.classList.remove('show');
-        }
-    });
-    
     // Back to upload button
     backToUploadButton.addEventListener('click', function() {
         showStage('upload');
-    });
-    
-    // Table search functionality
-    tableSearch.addEventListener('input', function() {
-        const searchText = this.value.toLowerCase();
-        
-        const rows = tableBody.querySelectorAll('tr');
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            let found = false;
-            
-            cells.forEach(cell => {
-                if (cell.textContent.toLowerCase().includes(searchText)) {
-                    found = true;
-                }
-            });
-            
-            row.style.display = found ? '' : 'none';
-        });
-        
-        // Update visible record count
-        const visibleRows = Array.from(tableBody.querySelectorAll('tr')).filter(row => row.style.display !== 'none').length;
-        recordCount.textContent = visibleRows + (visibleRows === 1 ? ' record' : ' records');
     });
     
     // Chat panel toggle
