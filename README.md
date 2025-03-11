@@ -35,8 +35,8 @@ AI-powered tool for extracting structured shipping data from various document fo
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/ShawonBarman/shipping-data-extractor.git
-   cd shipping-data-extractor
+   git clone https://github.com/ShawonBarman/shipping-data-extractor-using-openAI.git
+   cd shipping-data-extractor-using-openAI
    ```
 
 2. Create and activate a virtual environment:
